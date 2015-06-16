@@ -27,35 +27,6 @@ class TestBaseViews(TestCaseDatabase):
     Class for testing helper functions that are not neccessarily related to a
     single View and do not need special behaviour related to a view.
     """
-
-    def test_slug_to_uuid(self):
-        """
-        Test the conversion of a base64 URL encoded string to a UUID behaves as
-        expected
-
-        :return:
-        """
-        input_slug = '878JECDeTX6hoI77gq1Y2Q'
-        expected_uuid = 'f3bf0910-20de-4d7e-a1a0-8efb82ad58d9'
-
-        output_uuid = BaseView.helper_slug_to_uuid(input_slug)
-
-        self.assertEqual(expected_uuid, output_uuid)
-
-    def test_uuid_to_slug(self):
-        """
-        Test the conversion of UUID to a base64 URL encoded string behaves as
-        expected
-
-        :return: no return
-        """
-        input_uuid = uuid.UUID('f3bf0910-20de-4d7e-a1a0-8efb82ad58d9')
-        expected_slug = '878JECDeTX6hoI77gq1Y2Q'
-
-        output_slug = BaseView.helper_uuid_to_slug(input_uuid)
-
-        self.assertEqual(expected_slug, output_slug)
-
     def test_api_email_does_exist(self):
         """
         Tests that the api email resolver returns 200 if e-mail exists

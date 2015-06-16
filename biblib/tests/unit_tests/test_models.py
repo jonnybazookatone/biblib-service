@@ -10,16 +10,57 @@ PROJECT_HOME = os.path.abspath(
 sys.path.append(PROJECT_HOME)
 
 import app
+import uuid
 import unittest
-from models import db, User, Library, Permissions, MutableList
+from models import db, User, Library, Permissions, MutableList, GUID
 from flask.ext.testing import TestCase
+from tests.base import TestCaseDatabase
 
-class TestModelTypes(TestCase):
+class TestGUIDType(TestCaseDatabase):
     """
-    Class for testing the behaviour of the custom types created in the models
-    of the database
+    Class for testing the behaviour of the custom GUUID type created in the
+    models of the database
     """
+    def create_app(self):
+        """
+        Create the wsgi application
 
+        :return: application instance
+        """
+        app_ = app.create_app(config_type='TEST')
+        return app_
+
+    def test_slug_to_uuid(self):
+        """
+        Test the conversion of a base64 URL encoded string to a UUID behaves as
+        expected
+
+        :return:
+        """
+        input_slug = '878JECDeTX6hoI77gq1Y2Q'
+        expected_uuid = 'f3bf0910-20de-4d7e-a1a0-8efb82ad58d9'
+
+        output_uuid = GUID.slug_to_uuid(input_slug)
+        self.assertEqual(expected_uuid, output_uuid)
+
+    def test_uuid_to_slug(self):
+        """
+        Test the conversion of UUID to a base64 URL encoded string behaves as
+        expected
+
+        :return: no return
+        """
+        input_uuid = uuid.UUID('f3bf0910-20de-4d7e-a1a0-8efb82ad58d9')
+        expected_slug = '878JECDeTX6hoI77gq1Y2Q'
+
+        output_slug = GUID.uuid_to_slug(input_uuid)
+        self.assertEqual(expected_slug, output_slug)
+
+class TestMutableType(TestCase):
+    """
+    Class for testing the behaviour of the custom MutableType types created in
+    the models of the database
+    """
     def create_app(self):
         """
         Create the wsgi application

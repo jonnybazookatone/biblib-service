@@ -65,53 +65,6 @@ class BaseView(Resource):
     """
 
     @staticmethod
-    def helper_uuid_to_slug(library_uuid):
-        """
-        Convert a UUID to a slug
-
-        See a discussion about the details here:
-        http://stackoverflow.com/questions/12270852/
-        convert-uuid-32-character-hex-string-into-a-
-        youtube-style-short-id-and-back
-        :param library_uuid: unique identifier for the library
-
-        :return: library_slug: base64 URL safe slug
-        """
-        library_slug = base64.urlsafe_b64encode(library_uuid.bytes)
-        library_slug = library_slug.rstrip('=\n').replace('/', '_')
-        current_app.logger.info('Converted uuid: {0} to slug: {1}'
-                                .format(library_uuid, library_slug))
-        return library_slug
-
-    @staticmethod
-    def helper_slug_to_uuid(library_slug):
-        """
-        Convert a slug to a UUID
-
-        See a discussion about the details here:
-        http://stackoverflow.com/questions/12270852/
-        convert-uuid-32-character-hex-string-into-a-
-        youtube-style-short-id-and-back
-
-        Keep in mind that base64 only works on bytes, and so they have to be
-        encoded in ASCII. Flask uses unicode, and so you must modify the
-         encoding before passing it to base64. This is fine, given we output
-         all our encoded URLs for libraries as strings encoded in ASCII and do
-         not accept any unicode characters.
-
-        :param library_slug: base64 URL safe slug
-
-        :return: library_uuid: unique identifier for the library
-        """
-
-        library_uuid = (library_slug + '==').replace('_', '/')
-        library_uuid = library_uuid.encode('ascii')
-        library_uuid = uuid.UUID(bytes=base64.urlsafe_b64decode(library_uuid))
-        current_app.logger.info('Converted slug: {0} to uuid: {1}'
-                                .format(library_slug, library_uuid))
-        return str(library_uuid)
-
-    @staticmethod
     def helper_get_user_id():
         """
         Helper function: get the user id from the header, otherwise raise

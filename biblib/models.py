@@ -6,15 +6,15 @@ to be passed to the app creator within the Flask blueprint.
 """
 
 import uuid
+import base64
 from datetime import datetime
 from flask.ext.sqlalchemy import SQLAlchemy
-from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.ext.mutable import Mutable
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.types import TypeDecorator, CHAR, String
-
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 
 db = SQLAlchemy()
-
 
 class GUID(TypeDecorator):
     """
@@ -34,6 +34,51 @@ class GUID(TypeDecorator):
     """
     # Refers to the class of type being decorated
     impl = CHAR
+
+    @staticmethod
+    def uuid_to_slug(_uuid):
+        """
+        Convert a UUID to a slug
+
+        See a discussion about the details here:
+        http://stackoverflow.com/questions/12270852/
+        convert-uuid-32-character-hex-string-into-a-
+        youtube-style-short-id-and-back
+        :param _uuid: unique identifier for the library
+
+        :return: base64 URL safe slug
+        """
+        return base64.urlsafe_b64encode(
+            _uuid.bytes
+        ).rstrip('=\n').replace('/', '_')
+
+    @staticmethod
+    def slug_to_uuid(_slug):
+        """
+        Convert a slug to a UUID
+
+        See a discussion about the details here:
+        http://stackoverflow.com/questions/12270852/
+        convert-uuid-32-character-hex-string-into-a-
+        youtube-style-short-id-and-back
+
+        Keep in mind that base64 only works on bytes, and so they have to be
+        encoded in ASCII. Flask uses unicode, and so you must modify the
+         encoding before passing it to base64. This is fine, given we output
+         all our encoded URLs for libraries as strings encoded in ASCII and do
+         not accept any unicode characters.
+
+        :param _slug: base64 URL safe slug
+
+        :return: unique identifier for the library
+        """
+        print 'Converting slug', _slug
+
+        return uuid.UUID(
+            bytes=base64.urlsafe_b64decode(
+                (_slug.replace('_', '/') + '==').encode('ascii')
+            )
+        ).__str__()
 
     @staticmethod
     def load_dialect_impl(dialect):
@@ -59,7 +104,11 @@ class GUID(TypeDecorator):
         """
         if value is None:
             return value
-        elif dialect.name == 'postgresql':
+
+        if isinstance(value, str):
+            value = GUID.slug_to_uuid(value)
+
+        if dialect.name == 'postgresql':
             return str(value)
         else:
             if not isinstance(value, uuid.UUID):
@@ -80,7 +129,7 @@ class GUID(TypeDecorator):
         if value is None:
             return value
         else:
-            return uuid.UUID(value)
+            return GUID.uuid_to_slug(uuid.UUID(value))
 
     @staticmethod
     def compare_against_backend(dialect, conn_type):
@@ -214,7 +263,8 @@ class Library(db.Model):
     name = db.Column(db.String(50))
     description = db.Column(db.String(50))
     public = db.Column(db.Boolean)
-    bibcode = db.Column(MutableList.as_mutable(ARRAY(db.String(50))), default=[])
+    bibcode = db.Column(MutableList.as_mutable(ARRAY(db.String(50))),
+                        default=[])
     date_created = db.Column(
         db.DateTime,
         nullable=False,
@@ -229,6 +279,17 @@ class Library(db.Model):
     permissions = db.relationship('Permissions',
                                   backref='library',
                                   cascade='delete')
+
+    # @hybrid_property
+    # def id(self):
+    #     """
+    #     Convert the ID to a URL safe slug
+    #     """
+    #     return Library.uuid_to_slug(self._id)
+    #
+    # @id.setter
+    # def id(self, id):
+    #     self._id = Library.slug_to_uuid(id)
 
     def __repr__(self):
         return '<Library, library_id: {0} name: {1}, ' \
