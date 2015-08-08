@@ -270,18 +270,28 @@ class LibraryShop(object):
         self.user_view_post_data = post_data
         self.user_view_post_data_json = json_data
 
-    def document_view_post_data(self, action='add'):
+    def document_view_post_data(self,
+                                action='add',
+                                tag_content=None,
+                                tag_bibcode=None):
         """
         Expected data to be sent in a POST request to the DocumentView
         end point, /documents/<>
         :param action: action to perform with the bibcode (add, remove)
+        :param tag_content: tag words to add
+        :param tag_bibcode: bibcode to tag
 
         :return: POST data in dictionary format
         """
         post_data = dict(
             bibcode=self.get_bibcodes(),
-            action=action
+            action=action,
+            tag=tag_content
         )
+
+        if tag_bibcode and tag_content:
+            post_data['bibcode'] = tag_bibcode
+
         return post_data
 
     def document_view_post_data_json(self, action='add'):
